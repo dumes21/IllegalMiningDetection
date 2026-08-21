@@ -1,0 +1,14 @@
+# Dataset -- ~5.3 GB, re-downloadable via dataset_load.ipynb
+Dataset/
+data_splits/
+SmallMinesDS/
+*.zip
+*.tif
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Notebooks
+.ipynb_checkpoints/

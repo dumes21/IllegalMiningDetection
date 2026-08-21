@@ -1,0 +1,11 @@
+# Dataset download
+huggingface_hub==1.28.0
+
+# Raster IO and analysis
+rasterio==1.5.1
+numpy==2.5.2
+pandas==3.0.5
+matplotlib==3.11.1
+
+# Notebook kernel
+ipykernel==7.3.0
