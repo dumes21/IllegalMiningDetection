@@ -1,0 +1,96 @@
+# TerraMind (frozen encoder) on SmallMinesDS — bi-temporal 4-class mine mapping.
+#
+# CLI equivalent of terramind.ipynb. Run from the project root (needs smallmines_data.py and
+# data_splits/paired_splits.csv, both produced by the notebook):
+#
+#   terratorch fit  --config configs/GFMS/terramind.yaml
+#   terratorch test --config configs/GFMS/terramind.yaml --ckpt_path output/terramind_cli/checkpoints/best.ckpt
+#
+# Drop modalities from BOTH data.init_args.modalities and model.init_args.model_args.backbone_modalities
+# (+ backbone_bands) for the S2-only / S2+S1 ablations.
+
+seed_everything: 42
+
+trainer:
+  accelerator: auto
+  devices: 1
+  precision: 16-mixed
+  max_epochs: 30
+  log_every_n_steps: 10
+  default_root_dir: output/terramind_cli
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: output
+      name: terramind_cli
+  callbacks:
+    - class_path: ModelCheckpoint
+      init_args:
+        monitor: val/mIoU
+        mode: max
+        save_top_k: 1
+        filename: best
+    - class_path: EarlyStopping
+      init_args:
+        monitor: val/mIoU
+        mode: max
+        patience: 8
+    - class_path: LearningRateMonitor
+      init_args:
+        logging_interval: epoch
+
+data:
+  class_path: smallmines_data.SmallMinesPairedDataModule
+  init_args:
+    data_root: Dataset                     # or SmallMinesDS/SmallMinesDS after unzipping the HF download
+    split_csv: data_splits/paired_splits.csv
+    modalities: [S2L2A, S1RTC, DEM]
+    batch_size: 8
+    num_workers: 2
+    augment: true
+
+model:
+  class_path: terratorch.tasks.SemanticSegmentationTask
+  init_args:
+    model_factory: EncoderDecoderFactory
+    model_args:
+      backbone: terramind_v1_base
+      backbone_pretrained: true
+      backbone_modalities: [S2L2A, S1RTC, DEM]
+      backbone_bands:
+        S2L2A: [BLUE, GREEN, RED, RED_EDGE_1, RED_EDGE_2, RED_EDGE_3, NIR_BROAD, NIR_NARROW, SWIR_1, SWIR_2]
+        S1RTC: [VV, VH]
+        DEM: [DEM]
+      backbone_merge_method: mean
+      backbone_use_temporal: true          # shared encoder over 2016 and 2022 ...
+      backbone_temporal_n_timestamps: 2
+      backbone_temporal_pooling: concat    # ... features concatenated before the decoder
+      necks:
+        - name: SelectIndices
+          indices: [2, 5, 8, 11]
+        - name: ReshapeTokensToImage
+          remove_cls_token: false
+        - name: LearnedInterpolateToPyramidal
+      decoder: UNetDecoder
+      decoder_channels: [512, 256, 128, 64]
+      head_dropout: 0.1
+      num_classes: 4
+    loss: dice
+    ignore_index: -1
+    freeze_backbone: true                  # only decoder + head train
+    freeze_decoder: false
+    plot_on_val: false
+    class_names: [no mine, mine 2016 only, mine 2022 only (new), mine both years]
+
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 1.e-4
+    weight_decay: 0.05
+
+lr_scheduler:
+  class_path: ReduceLROnPlateau
+  init_args:
+    monitor: val/loss
+    factor: 0.5
+    patience: 3

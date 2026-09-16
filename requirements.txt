@@ -9,3 +9,8 @@ matplotlib==3.11.1
 
 # Notebook kernel
 ipykernel==7.3.0
+
+# TerraMind foundation model (pulls torch, lightning, timm, torchgeo, ...)
+# Install torch first with the CUDA build matching your GPU if training locally.
+terratorch>=1.2.13
+setuptools<81

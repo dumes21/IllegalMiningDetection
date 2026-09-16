@@ -12,3 +12,7 @@ __pycache__/
 
 # Notebooks
 .ipynb_checkpoints/
+
+# Training runs (checkpoints, logs)
+output/
+lightning_logs/
