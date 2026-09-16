@@ -14,3 +14,9 @@ ipykernel==7.3.0
 # Install torch first with the CUDA build matching your GPU if training locally.
 terratorch>=1.2.13
 setuptools<81
+torchgeo==0.9.0 #0.9.0 has support for terratorch 
+
+
+#GEE
+earthengine-api 
+geemap
