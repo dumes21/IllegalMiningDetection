@@ -1,0 +1,19 @@
+# Colab-only requirements. Colab already ships torch (CUDA build), numpy,
+# pandas, matplotlib, ipykernel, earthengine-api and geemap -- do NOT pin or
+# reinstall those here, or the running kernel ends up with mismatched modules
+# (e.g. the torch/sympy AttributeError on `import lightning`).
+#
+# Usage (in a Colab cell):
+#   !pip install -q -r colabrequirements.txt
+# then Runtime > Restart session before running any import cell.
+
+# Dataset download
+huggingface_hub
+
+# Raster IO
+rasterio
+
+# TerraMind foundation model (pulls lightning, timm, ... on top of Colab's torch)
+terratorch>=1.2.13
+setuptools<81
+torchgeo==0.9.0  # 0.9.0 has support for terratorch
